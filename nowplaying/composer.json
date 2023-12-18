@@ -1,0 +1,51 @@
+{
+    "name": "azuracast/nowplaying",
+    "description": "A lightweight PHP adapter for viewing the current now playing data in Icecast and SHOUTcast 1/2. A part of the AzuraCast software suite.",
+    "license": "Apache-2.0",
+    "require": {
+        "php": ">=8.1",
+        "ext-simplexml": "*",
+        "ext-xml": "*",
+        "ext-libxml": "*",
+        "ext-json": "*",
+        "guzzlehttp/guzzle": ">7",
+        "psr/http-client": "*",
+        "psr/http-factory": "*",
+        "psr/log": ">=1"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^1",
+        "roave/security-advisories": "dev-latest",
+        "php-parallel-lint/php-console-highlighter": "^1",
+        "php-parallel-lint/php-parallel-lint": "^1.3",
+        "php-http/discovery": "^1.9"
+    },
+    "scripts": {
+        "test": [
+            "@composer install",
+            "@phplint",
+            "@phpstan"
+        ],
+        "phplint": "parallel-lint . --exclude vendor",
+        "phpstan": "phpstan analyze"
+    },
+    "authors": [
+        {
+            "name": "Buster Neece",
+            "email": "buster@busterneece.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "NowPlaying\\": "src"
+        }
+    },
+    "config": {
+        "preferred-install": "dist",
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
+    },
+    "prefer-stable": true,
+    "minimum-stability": "dev"
+}
