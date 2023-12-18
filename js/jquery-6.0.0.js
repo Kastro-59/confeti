@@ -19,7 +19,7 @@
             mount_point: "", //For Icecast server
             type: "/;type=mp3",
             streampath: "/stream?icy=http",
-            cors: "/nowplaying",
+            cors: "/confeti/nowplaying",
             logo: "img/logo.png",
             servertitle: "My Radio Title", //For Shoutcast v2 server
             show_listeners: true,    
