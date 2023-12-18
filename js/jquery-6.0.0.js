@@ -66,7 +66,7 @@
             else if(settings.version == "icecast") {
                 audio.src = settings.URL + "/" + settings.mount_point;
                 settings.src = audio.src;
-                var dataURL = settings.cors + "/" + settings.URL + "/status-json.xsl";
+                var dataURL = settings.cors + "/https://api.streamafrica.net/metadata/index?z=" + settings.URL + "/status-json.xsl";
                 getIC(dataURL);             
             }
         });
