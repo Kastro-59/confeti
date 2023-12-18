@@ -11,75 +11,69 @@
 (function ($) {
     "use strict";
     $.fn.kastro = function (options) {
-        var settings = $.extend({
-            URL: "https://stream.zeno.fm/emertvc73mruv",
-            version: "icecast",
+              var settings = $.extend({
+            // Default Settings
+            URL: "",
+            version: "2",
             stream_id: 1,
-            mount_point: "",
+            mount_point: "", //For Icecast server
             type: "/;type=mp3",
-            streampath: "/stream?icy=https",
-            enable_cors: !1,
-            cors: "https://api.streamafrica.net/metadata/",
-            artwork: !0,
-            logo: "",
-            servertitle: "Radio KC",
-            show_listeners: !0,
+            streampath: "/stream?icy=http",
+            cors: "/nowplaying",
+            logo: "img/logo.png",
+            servertitle: "My Radio Title", //For Shoutcast v2 server
+            show_listeners: true,    
             src: "",
-            volume: 0.5,
+            volume: 0.5,            
             autoplay: false
         }, options);
         var thisObj;
         thisObj = this;
         var audio;
-        var ppBtn = $(".ppBtn", thisObj);
+        var ppBtn = $(".ppBtn", thisObj);       
         var cVolumeSlider = $(".volume-slider", thisObj);
         var cVolumeIcon = $(".icons-volume", thisObj);
         var cVolumeIconM = $(".icons-volumeM", thisObj);
         audio = new Audio();
         audio.volume = settings.volume;
         audio.preload = "auto";
-        $(".album-cover", thisObj).css({
-            'background-image': 'url(' + settings.logo + ')',
-            'background-size': '100% 100%'
-        });
-        $(".blur", thisObj).css({
-            'background': 'url(' + settings.logo + ')',
-            'background-size': '100% 100%'
-        });
+        
         thisObj.each(function () {
-            if (settings.autoplay == !0) {
-                audio.autoplay = !0
+            if(settings.autoplay == true){
+                audio.autoplay = true;
             }
-            if (settings.show_listeners == !1) {
-                $(".listeners", thisObj).addClass("nodisplay")
+            
+            if(settings.show_listeners == false) {
+                $(".listeners", thisObj).addClass("nodisplay");
             }
-            if (settings.version == 1) {
+            
+            if(settings.version == 1) {
                 audio.src = settings.URL + "/;type=mp3";
-                settings.src = audio.src;
-                var dataURL = settings.cors + "?z=" + settings.URL + "/7.html";
-                var hisURL = settings.cors + "?z=" + settings.URL + "/played.html";
-                getSH(dataURL, hisURL)
-            } else if (settings.version == 2) {
+                settings.src = audio.src;               
+                var dataURL = settings.cors + "/" + settings.URL + "/7.html";
+                var hisURL = settings.cors + "/" + settings.URL + "/played.html";
+                getSH(dataURL, hisURL);
+            }
+
+            else if(settings.version == 2) {
                 audio.src = settings.URL + settings.streampath;
-                settings.src = audio.src;
-                if (settings.enable_cors == !0) {
-                    var dataURL = settings.cors + "?z=" + settings.URL + "/stats?sid=" + settings.stream_id + "&json=1&callback=?";
-                    var hisURL = settings.cors + "?z=" + settings.URL + "/played?sid=" + settings.stream_id + "&type=json&callback=?"
-                } else {
-                    var dataURL = settings.URL + "/stats?sid=" + settings.stream_id + "&json=1&callback=?";
-                    var hisURL = settings.URL + "/played?sid=" + settings.stream_id + "&type=json&callback=?"
-                }
-                getSH(dataURL, hisURL)
-            } else if (settings.version == "icecast") {
+                settings.src = audio.src;               
+                var dataURL = settings.URL + "/stats?sid="+ settings.stream_id +"&json=1&callback=?";
+                var hisURL = settings.URL + "/played?sid="+ settings.stream_id +"&type=json&callback=?";
+                getSH(dataURL, hisURL);             
+            }
+
+            else if(settings.version == "icecast") {
                 audio.src = settings.URL + "/" + settings.mount_point;
                 settings.src = audio.src;
-                var dataURL = settings.cors + "?z=" + settings.URL ;
-                getIC(dataURL)
+                var dataURL = settings.cors + "/" + settings.URL + "/status-json.xsl";
+                getIC(dataURL);             
             }
         });
-
+        
+        //Play/Pause Handling
         function togglePlying(tog, bool) {
-            $(tog).toggleClass("playing", bool)
+            $(tog).toggleClass("playing", bool);
         }
 
         function playHandling() {
@@ -88,111 +82,133 @@
                 audio.play();
                 var $playing = $('.ppBtn.playing');
                 if ($(thisObj).find($playing).length === 0) {
-                    $playing.click()
+                    $playing.click();
                 }
-            } else {
-                audio.pause()
+            }
+            else {
+                audio.pause();
             }
         }
+        
         $(audio).on("playing", function () {
-            togglePlying(ppBtn, !0);
+            togglePlying(ppBtn, true);
             $(ppBtn).addClass("stop-btn");
-            $(ppBtn).removeClass("play-btn")
+            $(ppBtn).removeClass("play-btn");
         });
         $(audio).on("pause", function () {
-            togglePlying(ppBtn, !1);
+            togglePlying(ppBtn, false);
             $(ppBtn).removeClass("stop-btn");
-            $(ppBtn).addClass("play-btn")
-        });
+            $(ppBtn).addClass("play-btn");
+        });     
         $(ppBtn, thisObj).on("click tap", function () {
-            playHandling()
+            playHandling();
         });
+        
+        //Initial Visual Volume
         var volVal = audio.volume * 100;
         $(cVolumeSlider).val(volVal);
         $(".volValueTxt", thisObj).text(volVal + '%');
         volumeIcon();
 
+        //Volume Icon Handling
         function volumeIcon() {
-            if ($(cVolumeSlider).val() < 55 && $(cVolumeSlider).val() > 0) {
+            if($(cVolumeSlider).val() < 55 && $(cVolumeSlider).val() > 0){
                 $(cVolumeIcon).removeClass("icons-volume3 icons-volume1");
-                $(cVolumeIcon).addClass("icons-volume2")
+                $(cVolumeIcon).addClass("icons-volume2");               
             }
-            if ($(cVolumeSlider).val() == 0) {
+            if($(cVolumeSlider).val() == 0){
                 $(cVolumeIcon).removeClass("icons-volume2 icons-volume3");
-                $(cVolumeIcon).addClass("icons-volume1")
-            } else if ($(cVolumeSlider).val() > 55) {
+                $(cVolumeIcon).addClass("icons-volume1");               
+            }
+            else if($(cVolumeSlider).val() > 55){
                 $(cVolumeIcon).removeClass("icons-volume1 icons-volume2");
-                $(cVolumeIcon).addClass("icons-volume3")
+                $(cVolumeIcon).addClass("icons-volume3");
             }
         }
+        
+        //Mobile Volume Icon Handling
         $(cVolumeIconM).on("click tap", function () {
             $(cVolumeIconM).toggleClass("icons-volumeM2");
             if ($(cVolumeIconM).hasClass("icons-volumeM2")) {
-                audio.volume = 0
-            } else {
-                audio.volume = settings.volume
+                audio.volume = 0;
+            }
+            else {
+                audio.volume = settings.volume;
             }
         });
+        
+        //Volume Slider Handling
         $(".icons-volume", thisObj).on("click", function () {
-            $(cVolumeSlider).toggleClass("display")
+            $(cVolumeSlider).toggleClass("display");
         });
-        $(cVolumeSlider).mouseup(function () {
-            $(this).removeClass("display")
+        $(cVolumeSlider).mouseup(function(){
+            $(this).removeClass("display");
         });
-        if (navigator.appName == 'Microsoft Internet Explorer' || !!(navigator.userAgent.match(/Trident/) || navigator.userAgent.match(/rv:11/)) || (typeof $.browser !== "undefined" && $.browser.msie == 1)) {
-            cVolumeSlider.change('input', function () {
-                audio.volume = parseInt(this.value, 10) / 100;
+        
+        if (navigator.appName == 'Microsoft Internet Explorer' ||  !!(navigator.userAgent.match(/Trident/) || navigator.userAgent.match(/rv:11/)) || (typeof $.browser !== "undefined" && $.browser.msie == 1))
+            {
+            cVolumeSlider.change('input', function(){
+                audio.volume = parseInt(this.value, 10)/100;
                 var volumeVal = audio.volume * 100;
                 var volumeVal = Math.round(volumeVal);
                 $(".vol-value", thisObj).text('Volume:' + volumeVal + '%');
-                volumeIcon()
-            }, !1)
-        } else {
-            cVolumeSlider.on('input', function () {
+                volumeIcon();
+            }, false);
+        
+            }
+        
+        else {
+            cVolumeSlider.on('input',  function () {
                 var volumeVal = $(cVolumeSlider).val();
-                audio.volume = volumeVal / 100;
+                audio.volume = volumeVal/100;       
                 var volumeVal = Math.round(volumeVal);
-                $(".volValueTxt", thisObj).text(volumeVal + '%')
-                volumeIcon()
-            })
+                $(".volValueTxt", thisObj).text(volumeVal + '%')        
+                volumeIcon();
+            });         
         }
-
-        function formatArtist(artist) {
-            artist = artist.toLowerCase();
+        
+        //Format title and artist for album cover gathering
+        function formatArtist(artist){
+            artist = artist.toLowerCase();          
             artist = $.trim(artist);
             if (artist.includes("&")) {
-                artist = artist.substr(0, artist.indexOf(' &'))
-            } else if (artist.includes("feat")) {
-                artist = artist.substr(0, artist.indexOf(' feat'))
-            } else if (artist.includes("ft.")) {
-                artist = artist.substr(0, artist.indexOf(' ft.'))
+                 artist = artist.substr(0, artist.indexOf(' &'));               
             }
-            return artist
-        }
+            else if(artist.includes("feat")) {
+                artist = artist.substr(0, artist.indexOf(' feat'));
+            } else if (artist.includes("ft.")) {
+                artist = artist.substr(0, artist.indexOf(' ft.'));
+            }
 
-        function formatTitle(title) {
-            title = title.toLowerCase();
+            return artist;
+        }
+        
+        function formatTitle(title){
+            title = title.toLowerCase();            
             title = $.trim(title);
             if (title.includes("&")) {
-                title = title.replace('&', 'and')
-            } else if (title.includes("(")) {
-                title = title.substr(0, title.indexOf(' ('))
-            } else if (title.includes("ft")) {
-                title = title.substr(0, title.indexOf(' ft'))
+                title = title.replace('&', 'and');              
             }
-            return title
-        }
+            else if(title.includes("(")) {
+                title = title.substr(0, title.indexOf(' ('));
+            } else if (title.includes("ft")) {
+                title = title.substr(0, title.indexOf(' ft'));
+            }
 
+            return title;
+        }
+        
         function getSH(url, sHistory) {
-            if (settings.version == 1) {
+            if(settings.version == 1) {
                 function foo() {
-                    $.ajax({
-                        type: 'GET',
-                        dataType: 'html',
-                        url: url,
-                        success: function (data) {
+                    $.ajax ({
+                    type: 'GET',
+                    dataType: 'html',
+                    url: url,
+                    success: 
+                        function(data) {                        
                             var result = $.parseHTML(data)[1].data;
-                            var songtitle = result.split(",")[6];
+                            var songtitle  = result.split(",")[6];
                             if (songtitle != getTag()) {
                                 updateTag(songtitle);
                                 var songtitleSplit = songtitle.split('-');
@@ -201,27 +217,25 @@
                                 updateArtist(artist);
                                 updateTitle(title);
                                 updateServerInfo(result);
-                                if (settings.artwork == !0) {
-                                    getCover(artist, title)
-                                };
+                                getCover(artist, title);
                                 updateHistoryIC(artist, title);
                                 FBShare(result);
-                                TWShare2(result)
+                                TWShare2(result);                               
                             }
-                        },
-                        error: function () {
-                            console.log("error getting metadata")
                         }
-                    })
+                    })  
                 }
                 foo();
-                setInterval(foo, 12000)
-            } else if (settings.version == 2) {
+                setInterval(foo, 12000); 
+            }
+            
+            else if(settings.version == 2) {
                 function foo() {
-                    $.ajax({
-                        dataType: 'jsonp',
-                        url: url,
-                        success: function (result) {
+                    $.ajax ({
+                    dataType: 'jsonp',
+                    url: url,
+                    success: 
+                        function(result) {
                             if (result.songtitle != getTag()) {
                                 updateTag(result.songtitle);
                                 var songtitle = result.songtitle;
@@ -232,31 +246,152 @@
                                 updateArtist(artist);
                                 updateTitle(title);
                                 updateServerInfo(result);
-                                updateHistory(sHistory);
-                                if (settings.artwork == !0) {
-                                    getCover(artist, title)
-                                };
+                                updateHistory(sHistory); 
+                                getCover(artist, title);
                                 FBShare(result);
-                                TWShare(result)
+                                TWShare(result);                                
                             }
-                        },
-                        error: function () {
-                            console.log("error getting metadata")
                         }
-                    })
+                    })  
                 }
-                foo();
-                setInterval(foo, 12000)
-            }
+                    foo();
+                    setInterval(foo, 12000); 
+            }       
+        }
+        
+         //Update Track Info    
+        function getTag() {
+            return $(thisObj).attr("data-tag");
+        }
+        
+        function updateArtist(name) {
+            $(".artist-name", thisObj).text(name);
+        }
+        
+        function updateTitle(name) {
+            $(".songtitle", thisObj).text(name);
         }
 
-        function getIC(url) {
-            if (settings.version == "icecast") {
+        function updateTag(data) {
+            $(thisObj).attr("data-tag", data);
+        }
+        
+        //Album Cover Handling
+        function getCover(artist, title) {      
+            artist = formatArtist(artist);
+            title = formatTitle(title);
+            artist = encodeURI(artist);
+            title = encodeURI(title);   
+            var url = "https://itunes.apple.com/search?term==" + artist + "-" + title + "&media=music&limit=1";
+            $.ajax ({
+                dataType: 'jsonp',
+                url: url,
+                success:
+                    function(data) {                        
+                        if (data.results.length == 1){                          
+                            cover = data.results[0].artworkUrl100;
+                            cover = cover.replace('100x100', '400x400');
+                        }
+                        else {
+                            var cover = settings.logo;
+                        }
+                        $(".album-cover", thisObj).css({'background-image': 'url('+ cover +')', 'background-size': '100% 100%'});
+                        $(".album-cover1", thisObj).css({'background-image': 'url('+ cover +')', 'background-size': '100% 100%'});
+                        $(".album-cover", thisObj).addClass("bounceInDown");
+                        setTimeout( function(){ 
+                           $(".album-cover", thisObj).removeClass("bounceInDown");
+                        }, 5000 );
+                        $(".blur", thisObj).css({'background': '('+ cover +')', 'background-size': '100% 100%'});
+                    },              
+                error: 
+                    function() {
+                        console.log("Error on track title " + encodeURI(title));
+                    }
+            })
+        }
+        
+        //Update Server Info
+        function updateServerInfo(result) {
+            if(settings.version == 1) {
+                $(".servertitle", thisObj).text(settings.servertitle);
+                $(".listeners", thisObj).text(result.split(",")[0]);
+            }
+            
+            else if(settings.version == 2) {
+                $(".servertitle", thisObj).text(result.servertitle);
+                $(".listeners", thisObj).text(result.currentlisteners);
+            }
+        }
+        
+        //Update Song History
+        function updateHistory(url) {
+            $(".history ul li", thisObj).remove();          
+            if(settings.version == 1){
+                //Do nothing
+            }
+            
+            else if(settings.version == 2){
+                $(".row-serv", thisObj).remove();
+                $.ajax ({
+                dataType: 'jsonp',
+                url: url,
+                success: 
+                    function(data) {
+                        data.length = 6;
+                        for (var i = 1; i < data.length; i++) {
+                            var rowNum = i;
+                            var listVal = rowNum;
+                            var songtitle = data[i].title;
+                            var songtitleSplit = songtitle.split('-');
+                            var artist = songtitleSplit[0];
+                            var title = songtitleSplit[1];
+                            $(".history-serv", thisObj).append(
+                                "<div class='row-serv'><div class='history-cover' id='row" + rowNum +"'></div><div class='history-track-info'><div class='history-songtitle'>" + title + "</div><div class='history-artist-name'>"+ artist + "</div></div><div class='rowNum'>"+ listVal + "</div></div>"
+                            );
+                            
+                            getImageList(artist, title, rowNum);
+                        }
+                        
+                    }
+                })
+            }   
+        }
+        
+        //Get image list for song history
+        function getImageList(artist, title, i) {
+            artist = formatArtist(artist);
+            title = formatTitle(title);
+            artist = encodeURI(artist);
+            title = encodeURI(title);   
+            var url = "https://itunes.apple.com/search?term==" + artist + "-" + title + "&media=music&limit=1";
+            $.ajax ({
+                dataType: 'jsonp',
+                url: url,
+                success:
+                    function(data) {
+                        if (data.results.length == 1){                          
+                            cover = data.results[0].artworkUrl100;
+                            cover = cover.replace('100x100', '400x400');
+                        }
+                        else {
+                            var cover = settings.logo;
+                        }
+                        $('#row'+ i , thisObj).css({"background-image": "url(" + cover + ")", "background-size": "100% 100%"});
+                    },
+                error: 
+                function() { console.log("#getImageList(), Error in loading history image list for "  + decodeURI(artist)) }
+            })  
+        }
+        
+        //Icecast
+        function getIC(url) {                       
+            if(settings.version == "icecast") {
                 function foo() {
-                    $.ajax({
-                        dataType: 'json',
-                        url: url &"/nowplaying",
-                        success: function (data) {
+                    $.ajax ({
+                    dataType: 'json',
+                    url: url,
+                    success: 
+                        function(data) {
                             var result = findMPData(data);
                             if (result.title != getTag()) {
                                 updateTag(result.title);
@@ -266,240 +401,120 @@
                                 var title = songtitleSplit[1];
                                 updateArtist(artist);
                                 updateTitle(title);
-                                if (settings.artwork == !0) {
-                                    getCover(artist, title)
-                                };
+                                getCover(artist, title);
                                 updateServerInfoIC(result);
                                 updateHistoryIC(artist, title);
                                 FBShare(result);
-                                TWShare3(result)
+                                TWShare3(result);
                             }
-                        },
-                        error: function () {
-                            console.log("error getting metadata")
                         }
-                    })
+                   })   
                 }
                 foo();
-                setInterval(foo, 12000)
-            }
+                setInterval(foo, 12000); 
+            }   
         }
+        
         var icHis = new Array();
-
+        
         function findMPData(data) {
-            if (data.icestats.source.length === undefined) {
-                return data.icestats.source
-            } else {
+            if (data.icestats.source.length === undefined){
+                return data.icestats.source;
+            }
+            else{
                 for (var i = 0; i < data.icestats.source.length; i++) {
                     var str = data.icestats.source[i].listenurl;
+
                     if (str.indexOf(settings.mount_point) >= 0) {
-                        return data.icestats.source[i]
+                        return data.icestats.source[i];
                     }
                 }
             }
         }
 
-        function getTag() {
-            return $(thisObj).attr("data-tag")
-        }
-
-        function updateArtist(name) {
-            $(".artist-name", thisObj).text(name)
-        }
-
-        function updateTitle(name) {
-            $(".songtitle", thisObj).text(name)
-        }
-
-        function updateTag(data) {
-            $(thisObj).attr("data-tag", data)
-        }
-
-        function getCover(artist, title) {
-            artist = formatArtist(artist);
-            title = formatTitle(title);
-            artist = encodeURI(artist);
-            title = encodeURI(title);
-            var url = "https://itunes.apple.com/search?term==" + artist + "-" + title + "&media=music&limit=1";
-            $.ajax({
-                dataType: 'jsonp',
-                url: url,
-                success: function (data) {
-                    if (data.results.length == 1) {
-                        cover = data.results[0].artworkUrl100;
-                        cover = cover.replace('100x100', '400x400')
-                    } else {
-                        var cover = settings.logo
-                    }
-                    $(".album-cover", thisObj).css({
-                        'background-image': 'url(' + cover + ')',
-                        'background-size': '100% 100%'
-                    });
-                    
-                    $(".album-cover2", thisObj).css({
-                        'background-image': 'url(' + cover + ')',
-                        'background-size': '100% 100%'
-                    });
-                    $(".blur", thisObj).css({
-                        'background': 'url(' + cover + ')',
-                        'background-size': '100% 100%'
-                    })
-                },
-                error: function () {
-                    console.log("Error on track title " + encodeURI(title))
-                }
-            })
-        }
-
-        function updateServerInfo(result) {
-            if (settings.version == 1) {
-                $(".servertitle", thisObj).text(settings.servertitle);
-                $(".listeners", thisObj).text(result.split(",")[0])
-            } else if (settings.version == 2) {
-                $(".servertitle", thisObj).text(result.servertitle);
-                $(".listeners", thisObj).text(result.currentlisteners)
-            }
-        }
-
-        function updateServerInfoIC(data) {
+        function updateServerInfoIC(data) {            
             $(".servertitle", thisObj).text(data.server_name);
-            $(".listeners", thisObj).text(data.listeners)
+            $(".listeners", thisObj).text(data.listeners);
         }
-
-        function updateHistory(url) {
-            $(".history ul li", thisObj).remove();
-            if (settings.version == 1) {} else if (settings.version == 2) {
-                $(".row-wpr", thisObj).remove();
-                $.ajax({
-                    dataType: 'jsonp',
-                    url: url,
-                    success: function (data) {
-                        data.length = 6;
-                        for (var i = 1; i < data.length; i++) {
-                            var rowNum = i;
-                            var listVal = rowNum;
-                            var songtitle = data[i].title;
-                            var songtitleSplit = songtitle.split('-');
-                            var artist = songtitleSplit[0];
-                            var title = songtitleSplit[1];
-                            $(".history-wpr", thisObj).append("<div class='row-wpr'><div class='history-cover' id='row" + rowNum + "'></div><div class='history-track-info'><div class='history-songtitle'>" + title + "</div><div class='history-artist-name'>" + artist + "</div></div><div class='rowNum'>" + listVal + "</div></div>");
-                            if (settings.artwork == !0) {
-                                getImageList(artist, title, rowNum)
-                            } else {
-                                $('#row' + i, thisObj).css({
-                                    "background-image": "url(" + settings.logo + ")",
-                                    "background-size": "100% 100%"
-                                })
-                            }
-                        }
-                    }
-                })
-            }
-        }
-
+        
         function updateHistoryIC(artist, title) {
             addToArray(artist, title);
-            createHisList()
+            createHisList();
         }
 
         function addToArray(artist, title) {
-            icHis.unshift({
-                ar: artist,
-                tt: title
-            });
-            icHis.length = icHis.length < 6 ? icHis.length : 6
+            icHis.unshift({ar: artist, tt: title});
+            icHis.length = icHis.length < 6 ? icHis.length : 6;
         }
-
-        function createHisList() {
-            $(".row-wpr", thisObj).remove();
-            for (var i = 1; i < icHis.length; i++) {
+        
+        function createHisList(){
+            $(".row-serv", thisObj).remove();
+            for(var i = 1; i < icHis.length; i++){
                 var rowNum = i;
                 var listVal = rowNum;
                 var artist = icHis[i].ar;
                 var title = icHis[i].tt;
-                $(".history-wpr", thisObj).append("<div class='row-wpr'><div class='history-cover' id='row" + rowNum + "'></div><div class='history-track-info'><div class='history-songtitle'>" + title + "</div><div class='history-artist-name'>" + artist + "</div></div><div class='rowNum'>" + listVal + "</div></div>");
-                if (settings.artwork == !0) {
-                    getImageList(artist, title, rowNum)
-                } else {
-                    $('#row' + i, thisObj).css({
-                        "background-image": "url(" + settings.logo + ")",
-                        "background-size": "100% 100%"
-                    })
-                }
+                $(".history-serv", thisObj).append(
+                    "<div class='row-serv'><div class='history-cover' id='row" + rowNum +"'></div><div class='history-track-info'><div class='history-songtitle'>" + title + "</div><div class='history-artist-name'>"+ artist + "</div></div><div class='rowNum'>"+ listVal + "</div></div>"
+                );
+                getImageList(artist, title, rowNum);
             }
         }
-
-        function getImageList(artist, title, i) {
-            artist = formatArtist(artist);
-            title = formatTitle(title);
-            artist = encodeURI(artist);
-            title = encodeURI(title);
-            var url = "https://itunes.apple.com/search?term==" + artist + "-" + title + "&media=music&limit=1";
-            $.ajax({
-                dataType: 'jsonp',
-                url: url,
-                success: function (data) {
-                    if (data.results.length == 1) {
-                        cover = data.results[0].artworkUrl100;
-                        cover = cover.replace('100x100', '400x400')
-                    } else {
-                        var cover = settings.logo
-                    }
-                    $('#row' + i, thisObj).css({
-                        "background-image": "url(" + cover + ")",
-                        "background-size": "100% 100%"
-                    })
-                },
-                error: function () {
-                    console.log("#getImageList(), Error in loading history image list for " + decodeURI(artist))
-                }
-            })
-        }
+        
+        //Song history panel handling
         $(".icons-history", thisObj).on("click tap", function () {
             $(".icons-history", thisObj).toggleClass("icons-close");
             if (!$(".player-ctr", thisObj).hasClass("open")) {
                 $(".player-ctr", thisObj).fadeOut(400);
-                $(".history-wpr", thisObj).delay(600).fadeIn(400);
-                $(".player-ctr", thisObj).addClass("open")
-            } else if ($(".player-ctr", thisObj).hasClass("open")) {
+                $(".history-serv", thisObj).delay(600).fadeIn(400);
+                $(".player-ctr", thisObj).addClass("open");
+            }
+            else if($(".player-ctr", thisObj).hasClass("open")) {
                 $(".player-ctr", thisObj).removeClass("open");
-                $(".history-wpr", thisObj).fadeOut(400);
-                $(".player-ctr", thisObj).delay(600).fadeIn(400)
+                $(".history-serv", thisObj).fadeOut(400);
+                $(".player-ctr", thisObj).delay(600).fadeIn(400);
             }
         });
-        $(".album-cover-wpr", thisObj).hover(function () {
-            $(".social-share-wpr", thisObj).toggleClass("display");
+        
+        // Share
+        $(".album-cover-serv", thisObj).hover(function () {
+            $(".social-share-serv", thisObj).toggleClass("display");
+            $(".social-link-twitter", thisObj).toggleClass("bounceIn");
+            $(".social-link-facebook", thisObj).toggleClass("bounceIn");
         })
-
+        
         function FBShare(result) {
             var siteURL = window.location.href;
-            var url = "https://www.facebook.com/home?status=I'm listening to" + encodeURIComponent(siteURL);
-            $("#aface", thisObj).attr("href", url)
+            var url = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(siteURL);
+            $("#aface", thisObj).attr("href", url);
         }
-
+        
         function TWShare(result) {
             var siteURL = window.location.href;
             var url = "https://twitter.com/home?status=I'm listening to " + result.songtitle + " @ " + siteURL;
-            $("#atwitter", thisObj).attr("href", url)
+            $("#atwitter", thisObj).attr("href", url);
         }
-
+        
         function TWShare2(result) {
             var siteURL = window.location.href;
             var url = "https://twitter.com/home?status=I'm listening to " + result.split(",")[6] + " @ " + siteURL;
-            $("#atwitter", thisObj).attr("href", url)
+            $("#atwitter", thisObj).attr("href", url);
         }
-
+        
         function TWShare3(result) {
             var siteURL = window.location.href;
             var url = "https://twitter.com/home?status=I'm listening to " + result.title + " @ " + siteURL;
-            $("#atwitter", thisObj).attr("href", url)
+            $("#atwitter", thisObj).attr("href", url);
         }
-        if (/Android|webOS|iPhone|iPad|iPod|Opera Mini/i.test(navigator.userAgent)) {
+        
+        //Mobile Volume Classes
+        if( /Android|webOS|iPhone|iPad|iPod|Opera Mini/i.test(navigator.userAgent) ) {
             $(cVolumeIcon).addClass("nodisplay");
-            $(cVolumeIconM).addClass("display")
-        }
-    }
-})(jQuery)
+            $(cVolumeIconM).addClass("display");
+            }
+    };
+
+})(jQuery);
 
 var fecha=new Date();
 var diames=fecha.getDate();
